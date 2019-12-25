@@ -19,6 +19,7 @@ type AwsFetcher struct {
 	// As Policy and Role descriptions are immutable, we can skip fetching them
 	// when pushing to AWS
 	SkipFetchingPolicyAndRoleDescriptions bool
+	SkipS3                                bool
 
 	Debug *log.Logger
 
@@ -36,7 +37,11 @@ func (a *AwsFetcher) init() error {
 
 	s := awsSession()
 	a.iam = newIamClient(s)
-	a.s3 = newS3Client(s)
+
+	if !a.SkipS3 {
+		a.s3 = newS3Client(s)
+	}
+
 	if a.account, err = a.getAccount(); err != nil {
 		return err
 	}
@@ -63,12 +68,16 @@ func (a *AwsFetcher) Fetch() (*AccountData, error) {
 		iamErr = a.fetchIamData()
 	}()
 
-	log.Println("Fetching S3 data")
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		s3Err = a.fetchS3Data()
-	}()
+	if !a.SkipS3 {
+		log.Println("Fetching S3 data")
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s3Err = a.fetchS3Data()
+		}()
+	} else {
+		log.Println("Skip fetching S3 data")
+	}
 
 	wg.Wait()
 

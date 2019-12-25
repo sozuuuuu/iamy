@@ -36,6 +36,7 @@ func main() {
 		canDelete = pull.Flag("delete", "Delete extraneous files from destination dir").Bool()
 		push      = kingpin.Command("push", "Syncs IAM users, groups and policies from files to the active AWS account")
 		pushDir   = push.Flag("dir", "The directory to load yaml files from").Default(defaultDir).Short('d').ExistingDir()
+		skipS3    = pull.Flag("skip-s3", "Skip S3 policies").Bool()
 	)
 	dryRun = kingpin.Flag("dry-run", "Show what would happen, but don't prompt to do it").Bool()
 
@@ -70,6 +71,7 @@ func main() {
 		PullCommand(ui, PullCommandInput{
 			Dir:       *pullDir,
 			CanDelete: *canDelete,
+			SkipS3:    *skipS3,
 		})
 	}
 }
